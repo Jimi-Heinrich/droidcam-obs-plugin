@@ -22,6 +22,7 @@ jobs:
           repository: obsproject/obs-studio
           ref: ${{ env.OBS_VERSION }}
           path: deps/src
+          submodules: recursive
 
       - name: Qt6, jpeg-turbo, ffmpeg
         run: brew install qt@6 jpeg-turbo ffmpeg
@@ -41,13 +42,16 @@ jobs:
         working-directory: plugin
         run: |
           mkdir -p build
+          QT=$(brew --prefix qt@6)
           make \
             ARCH=x86_64 \
             DEPS_DIR=$GITHUB_WORKSPACE/deps \
             OBS_DIR=$GITHUB_WORKSPACE/deps/src \
             FFMPEG_DIR=$(brew --prefix ffmpeg) \
-            QT_DIR=$(brew --prefix qt@6) \
-            JPEG_DIR=$(brew --prefix jpeg-turbo)
+            QT_DIR=$QT \
+            JPEG_DIR=$(brew --prefix jpeg-turbo) \
+            INCLUDES="-I$GITHUB_WORKSPACE/deps/src/deps/simde -F$QT/lib" \
+            LDD_DIRS="-F$QT/lib"
 
       - name: Ergebnis hochladen
         uses: actions/upload-artifact@v4
