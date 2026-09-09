@@ -63,6 +63,25 @@ jobs:
           repository: simd-everywhere/simde
           path: deps/simde
 
+      - name: obsconfig.h beschaffen
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/deps/gen
+          echo "--- Suche im Framework ---"
+          find $GITHUB_WORKSPACE/deps/lib -name 'obsconfig.h' || true
+          echo "--- Vorlage im Quellbaum ---"
+          find $GITHUB_WORKSPACE/deps/src -name 'obsconfig.h.in' || true
+          IN=$(find $GITHUB_WORKSPACE/deps/src -name 'obsconfig.h.in' | head -1)
+          if [ -n "$IN" ]; then
+            echo "--- Inhalt der Vorlage ---"
+            cat "$IN"
+            sed -e 's/#cmakedefine01 \(.*\)/#define \1 0/' \
+                -e 's/#cmakedefine \(.*\)/\/* \1 *\//' \
+                -e 's/@OBS_VERSION@/'"$OBS_VERSION"'/g' \
+                -e 's/@[A-Za-z0-9_]*@//g' \
+                "$IN" > $GITHUB_WORKSPACE/deps/gen/obsconfig.h
+            echo "--- erzeugt ---"
+            cat $GITHUB_WORKSPACE/deps/gen/obsconfig.h
+          fi
           
       - name: Bauen
         working-directory: plugin
@@ -71,7 +90,7 @@ jobs:
           QT=$(brew --prefix qt@6)
 
           SIMDE_ROOT="$GITHUB_WORKSPACE/deps/simde"
-          EXTRA="-I$SIMDE_ROOT -F$QT/lib"
+           EXTRA="-I$SIMDE_ROOT -I$GITHUB_WORKSPACE/deps/gen -F$QT/lib"
 
           EXTRA="-I$SIMDE_ROOT -F$QT/lib"
           for f in QtCore QtGui QtWidgets QtSvg QtXml; do
