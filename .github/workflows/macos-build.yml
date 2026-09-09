@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: macos-15-intel
     env:
-      WF_VERSION: "v4"
+      WF_VERSION: "v5"
       OBS_VERSION: "32.1.2"
       GH_TOKEN: ${{ github.token }}
 
@@ -53,16 +53,21 @@ jobs:
           echo "--- simde ---"
           find "$GITHUB_WORKSPACE/deps/src" -path '*simde/x86/sse2.h' | head -3
 
+      - name: simde holen
+        uses: actions/checkout@v4
+        with:
+          repository: simd-everywhere/simde
+          path: deps/simde
+
+          
       - name: Bauen
         working-directory: plugin
         run: |
           mkdir -p build
           QT=$(brew --prefix qt@6)
 
-          SSE2=$(find "$GITHUB_WORKSPACE/deps/src" -path '*simde/x86/sse2.h' | head -1)
-          if [ -z "$SSE2" ]; then echo "simde nicht gefunden"; exit 1; fi
-          SIMDE_ROOT="${SSE2%/simde/x86/sse2.h}"
-          echo "SIMDE_ROOT=$SIMDE_ROOT"
+          SIMDE_ROOT="$GITHUB_WORKSPACE/deps/simde"
+          EXTRA="-I$SIMDE_ROOT -F$QT/lib"
 
           EXTRA="-I$SIMDE_ROOT -F$QT/lib"
           for f in QtCore QtGui QtWidgets QtSvg QtXml; do
