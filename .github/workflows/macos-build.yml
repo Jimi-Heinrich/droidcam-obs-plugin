@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: macos-15-intel
     env:
-      WF_VERSION: "v5"
+      WF_VERSION: "v8"
       OBS_VERSION: "32.1.2"
       GH_TOKEN: ${{ github.token }}
 
@@ -90,9 +90,8 @@ jobs:
           QT=$(brew --prefix qt@6)
 
           SIMDE_ROOT="$GITHUB_WORKSPACE/deps/simde"
-           EXTRA="-I$SIMDE_ROOT -I$GITHUB_WORKSPACE/deps/gen -F$QT/lib"
+          EXTRA="-I$SIMDE_ROOT -I$GITHUB_WORKSPACE/deps/gen -F$QT/lib"
 
-          EXTRA="-I$SIMDE_ROOT -F$QT/lib"
           for f in QtCore QtGui QtWidgets QtSvg QtXml; do
             EXTRA="$EXTRA -I$QT/lib/$f.framework/Headers"
           done
