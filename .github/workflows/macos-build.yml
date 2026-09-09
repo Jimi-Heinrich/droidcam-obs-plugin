@@ -90,7 +90,10 @@ jobs:
           QT=$(brew --prefix qt@6)
 
           SIMDE_ROOT="$GITHUB_WORKSPACE/deps/simde"
-          EXTRA="-I$SIMDE_ROOT -I$GITHUB_WORKSPACE/deps/gen -F$QT/lib"
+          
+          echo "--- deps/lib ---"
+          ls -la $GITHUB_WORKSPACE/deps/lib
+          EXTRA="-I$SIMDE_ROOT -I$GITHUB_WORKSPACE/deps/gen -F$QT/lib -L$GITHUB_WORKSPACE/deps/lib"
 
           for f in QtCore QtGui QtWidgets QtSvg QtXml; do
             EXTRA="$EXTRA -I$QT/lib/$f.framework/Headers"
