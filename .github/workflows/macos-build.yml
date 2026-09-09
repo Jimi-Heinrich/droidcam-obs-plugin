@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: macos-15-intel
     env:
-      WF_VERSION: "v8"
+      WF_VERSION: "v10"
       OBS_VERSION: "32.1.2"
       GH_TOKEN: ${{ github.token }}
 
@@ -40,14 +40,16 @@ jobs:
             --repo obsproject/obs-studio \
             --pattern '*Intel*.dmg' --dir dmg
           hdiutil attach dmg/*.dmg -mountpoint /Volumes/OBS -nobrowse -quiet
+          echo "--- Frameworks im DMG ---"
+          ls -la /Volumes/OBS/OBS.app/Contents/Frameworks/
+          echo "--- Suche nach frontend-api im gesamten Paket ---"
+          find /Volumes/OBS/OBS.app -name '*obs-frontend-api*' || true
           mkdir -p deps/lib
-          cp -R /Volumes/OBS/OBS.app/Contents/Frameworks/libobs.framework deps/lib/
-          cp -R /Volumes/OBS/OBS.app/Contents/Frameworks/libobs-frontend-api* deps/lib/ 2>/dev/null || true
+          cp -RL /Volumes/OBS/OBS.app/Contents/Frameworks/libobs.framework deps/lib/
+          cp -RL /Volumes/OBS/OBS.app/Contents/Frameworks/*obs-frontend-api* deps/lib/ || true
+          echo "--- deps/lib danach ---"
           ls -la deps/lib
-          echo "--- libobs.framework ---"
-          ls -R deps/lib/libobs.framework | head -40
           hdiutil detach /Volumes/OBS -quiet
-          ls deps/lib
 
       - name: Umgebung pruefen
         run: |
