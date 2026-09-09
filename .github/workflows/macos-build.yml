@@ -41,7 +41,11 @@ jobs:
             --pattern '*Intel*.dmg' --dir dmg
           hdiutil attach dmg/*.dmg -mountpoint /Volumes/OBS -nobrowse -quiet
           mkdir -p deps/lib
-          cp -R /Volumes/OBS/OBS.app/Contents/Frameworks/* deps/lib/
+          cp -R /Volumes/OBS/OBS.app/Contents/Frameworks/libobs.framework deps/lib/
+          cp -R /Volumes/OBS/OBS.app/Contents/Frameworks/libobs-frontend-api* deps/lib/ 2>/dev/null || true
+          ls -la deps/lib
+          echo "--- libobs.framework ---"
+          ls -R deps/lib/libobs.framework | head -40
           hdiutil detach /Volumes/OBS -quiet
           ls deps/lib
 
