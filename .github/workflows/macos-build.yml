@@ -5,18 +5,25 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15-intel   # Intel-Runner
+    runs-on: macos-15-intel
     env:
+      WF_VERSION: "v4"
       OBS_VERSION: "32.1.2"
       GH_TOKEN: ${{ github.token }}
 
     steps:
+      - name: Welche Fassung laeuft
+        run: echo "=== Workflow-Version $WF_VERSION ==="
+
       - name: Plugin-Quellen holen
         uses: actions/checkout@v4
         with:
           path: plugin
 
-      - name: OBS-Quellen holen (nur Header)
+      - name: Workflow-Datei anzeigen
+        run: head -20 plugin/.github/workflows/macos-build.yml
+
+      - name: OBS-Quellen holen
         uses: actions/checkout@v4
         with:
           repository: obsproject/obs-studio
@@ -38,11 +45,31 @@ jobs:
           hdiutil detach /Volumes/OBS -quiet
           ls deps/lib
 
+      - name: Umgebung pruefen
+        run: |
+          QT=$(brew --prefix qt@6)
+          echo "QT=$QT"
+          ls "$QT/lib" | head -20
+          echo "--- simde ---"
+          find "$GITHUB_WORKSPACE/deps/src" -path '*simde/x86/sse2.h' | head -3
+
       - name: Bauen
         working-directory: plugin
         run: |
           mkdir -p build
           QT=$(brew --prefix qt@6)
+
+          SSE2=$(find "$GITHUB_WORKSPACE/deps/src" -path '*simde/x86/sse2.h' | head -1)
+          if [ -z "$SSE2" ]; then echo "simde nicht gefunden"; exit 1; fi
+          SIMDE_ROOT="${SSE2%/simde/x86/sse2.h}"
+          echo "SIMDE_ROOT=$SIMDE_ROOT"
+
+          EXTRA="-I$SIMDE_ROOT -F$QT/lib"
+          for f in QtCore QtGui QtWidgets QtSvg QtXml; do
+            EXTRA="$EXTRA -I$QT/lib/$f.framework/Headers"
+          done
+          echo "EXTRA=$EXTRA"
+
           make \
             ARCH=x86_64 \
             DEPS_DIR=$GITHUB_WORKSPACE/deps \
@@ -50,8 +77,7 @@ jobs:
             FFMPEG_DIR=$(brew --prefix ffmpeg) \
             QT_DIR=$QT \
             JPEG_DIR=$(brew --prefix jpeg-turbo) \
-            INCLUDES="-I$GITHUB_WORKSPACE/deps/src/deps/simde -F$QT/lib" \
-            LDD_DIRS="-F$QT/lib"
+            STATIC="$EXTRA"
 
       - name: Ergebnis hochladen
         uses: actions/upload-artifact@v4
